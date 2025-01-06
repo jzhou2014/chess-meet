@@ -57,7 +57,7 @@ CustomSquareRenderer.displayName = "CustomSquareRenderer";
 function ChessBoard() {
   const game = useMemo(() => new Chess(), []);
   const [gamePosition, setGamePosition] = useState(game.fen());
-  const [allMovesString, setAllMovesString] = useState([]);
+  const [allMovesString, setAllMovesString] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(false); // Play/Pause state
   const isPlayingRef = useRef(false);
   const [hasGameStarted, setHasGameStarted] = useState(false);

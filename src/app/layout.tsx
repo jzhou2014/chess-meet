@@ -65,7 +65,11 @@ export default function RootLayout({
                 by{" "}
                 <a
                   target="_blank"
-                  href={(metadata.authors[0] as { url: string }).url}
+                  href={
+                    Array.isArray(metadata.authors) && metadata.authors[0]
+                      ? (metadata.authors[0] as { url: string }).url
+                      : "#"
+                  }
                   className="hover:underline hover:text-blue-300"
                 >
                   Jin Zhou

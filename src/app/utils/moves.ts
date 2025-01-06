@@ -36,13 +36,13 @@ export function describeMove(move: string) {
 
   // Pawn promotion
   if (move.length === 5 && move[0] === "P" && move[4].toLowerCase() === "=") {
-    const promotionPiece = pieceNames?.[move[4]?.toUpperCase()] ?? "Queen";
+    const promotionPiece = pieceNames?.[move[4]?.toUpperCase() as keyof typeof pieceNames] ?? "Queen";
     return `Pawn promotes to ${promotionPiece}`;
   }
 
   // Normal move
   const isPawn = !(move[0] in pieceNames);
-  return `${pieceNames?.[move[0]] ?? "Pawn"} moves to ${
+  return `${pieceNames?.[move[0] as keyof typeof pieceNames] ?? "Pawn"} moves to ${
     isPawn ? move : move.slice(1)
 }`;
 
