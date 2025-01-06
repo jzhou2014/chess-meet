@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+/* import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -27,6 +27,66 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {children}
+      </body>
+    </html>
+  );
+}
+ */
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Chess Meet",
+  description: "How good are players at chess?",
+  authors: [{ name: "Jin Zhou", url: "https://www.linkedin.com/in/jin-zhou-a799853/" }],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const socials = {
+    LinkedIn: "https://www.linkedin.com/in/jin-zhou-a799853/",
+    GitHub: "https://github.com/jzhou2014/chess-meet",
+  };
+  return (
+    <html lang="en">
+      <body className={`${inter.className} bg-white`}>
+        <nav className="bg-gray-800 text-white p-4 sticky top-0">
+          <div className="container mx-auto w-[80vw] flex justify-between items-center">
+            <h1 className="text-2xl font-bold">
+              {metadata.title as string}
+              <span className="text-sm font-semibold ml-3">
+                by{" "}
+                <a
+                  target="_blank"
+                  href={(metadata.authors[0] as { url: string }).url}
+                  className="hover:underline hover:text-blue-300"
+                >
+                  Jin Zhou
+                </a>
+              </span>
+            </h1>
+            <div>
+              {Object.entries(socials).map(([name, url]) => (
+                <a
+                  key={name}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-5 hover:underline hover:text-blue-300"
+                >
+                  {name}
+                </a>
+              ))}
+            </div>
+          </div>
+        </nav>
         {children}
       </body>
     </html>
