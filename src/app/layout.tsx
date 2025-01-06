@@ -72,7 +72,7 @@ export default function RootLayout({
                   }
                   className="hover:underline hover:text-blue-300"
                 >
-                  Jin Zhou
+                  Jin Zhou, Liqiang Deng
                 </a>
               </span>
             </h1>
