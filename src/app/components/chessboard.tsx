@@ -1,10 +1,9 @@
 "use client";
 
 import html2canvas from "html2canvas";
-import { forwardRef, useState, useMemo, useEffect, useRef, JSX } from "react";
+import { useState, useMemo, useEffect, useRef, JSX } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
-import { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
 import { describeMove } from "../utils/moves";
 import { getNextMove } from "../controllers/llm";
 import { IPlayer } from "../utils/types";
