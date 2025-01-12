@@ -1,7 +1,7 @@
 "use client";
 
 import html2canvas from "html2canvas";
-import { forwardRef, useState, useMemo, useEffect, useRef } from "react";
+import React, { forwardRef, useState, useMemo, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
@@ -9,6 +9,7 @@ import { describeMove } from "../utils/moves";
 import { getNextMove } from "../controllers/llm";
 import { IPlayer } from "../utils/types";
 import { llms } from "../utils/models";
+import Image from "next/image";
 
 const LLM_THINK_DELAY = 0.5;
 const LOOP_DELAY = 0.5;
@@ -254,18 +255,101 @@ function ChessBoard() {
     console.log("Game reset!");
   };
 
+  const [activeSquare, setActiveSquare] = useState("");
+  const threeDPieces = useMemo(() => {
+    const pieces = [
+      { piece: "wP", pieceHeight: 1 },
+      { piece: "wN", pieceHeight: 1.2 },
+      { piece: "wB", pieceHeight: 1.2 },
+      { piece: "wR", pieceHeight: 1.2 },
+      { piece: "wQ", pieceHeight: 1.5 },
+      { piece: "wK", pieceHeight: 1.6 },
+      { piece: "bP", pieceHeight: 1 },
+      { piece: "bN", pieceHeight: 1.2 },
+      { piece: "bB", pieceHeight: 1.2 },
+      { piece: "bR", pieceHeight: 1.2 },
+      { piece: "bQ", pieceHeight: 1.5 },
+      { piece: "bK", pieceHeight: 1.6 },
+    ];
+
+    const pieceComponents = {};
+    pieces.forEach(({ piece, pieceHeight }) => {
+      pieceComponents[piece] = ({ squareWidth }: { squareWidth: number }) => (
+          <div
+              style={{
+                width: squareWidth,
+                height: squareWidth,
+                position: "relative",
+                pointerEvents: "none",
+              }}
+          >
+            <Image
+                src={`/media/3d-pieces/${piece}.webp`}
+                alt={`${piece} piece`}
+                width={squareWidth}
+                height={pieceHeight * squareWidth}
+                style={{
+                  position: "absolute",
+                  bottom: `${0.2 * squareWidth}px`,
+                  objectFit: piece[1] === "K" ? "contain" : "cover",
+                }}
+            />
+          </div>
+      );
+    });
+    return pieceComponents;
+  }, []);
+
   return (
       <div className="flex flex-row gap-10 items-start justify-start">
         <div className="flex flex-col gap-2 ml-10 sticky mt-5 top-20 bg-gray-100 pb-3 px-3 pt-2 rounded-lg">
           <h3 className="text-xl font-semibold text-center">Chess Board</h3>
           <div id={"cb"} className="h-[450px] w-[450px]">
             <Chessboard
-                id="BasicBoard"
+                id="Styled3DBoard"
                 position={gamePosition}
                 arePiecesDraggable={false}
                 showBoardNotation={false}
                 customSquare={CustomSquareRenderer}
                 autoPromoteToQueen={true}
+                customBoardStyle={{
+                  transform: "rotateX(27.5deg)",
+                  transformOrigin: "center",
+                  border: "16px solid #b8836f",
+                  borderStyle: "outset",
+                  borderRightColor: " #b27c67",
+                  borderRadius: "4px",
+                  boxShadow: "rgba(0, 0, 0, 0.5) 2px 24px 24px 8px",
+                  borderRightWidth: "2px",
+                  borderLeftWidth: "2px",
+                  borderTopWidth: "0px",
+                  borderBottomWidth: "18px",
+                  borderTopLeftRadius: "8px",
+                  borderTopRightRadius: "8px",
+                  padding: "8px 8px 12px",
+                  background: "#e0c094",
+                  backgroundImage: 'url("/media/wood-pattern.png")',
+                  backgroundSize: "cover",
+                }}
+                customPieces={threeDPieces}
+                customLightSquareStyle={{
+                  backgroundColor: "#e0c094",
+                  backgroundImage: 'url("/media/wood-pattern.png")',
+                  backgroundSize: "cover",
+                }}
+                customDarkSquareStyle={{
+                  backgroundColor: "#865745",
+                  backgroundImage: 'url("/media/wood-pattern.png")',
+                  backgroundSize: "cover",
+                }}
+                animationDuration={500}
+                customSquareStyles={{
+                  [activeSquare]: {
+                    boxShadow: "inset 0 0 1px 6px rgba(255,255,255,0.75)",
+                  },
+                }}
+                onMouseOverSquare={(sq) => setActiveSquare(sq)}
+                onMouseOutSquare={() => setActiveSquare("")}
             />
           </div>
           <div className="flex justify-between items-center">
