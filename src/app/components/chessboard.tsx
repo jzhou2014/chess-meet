@@ -1,7 +1,7 @@
 "use client";
 
 import html2canvas from "html2canvas";
-import React, { forwardRef, useState, useMemo, useEffect, useRef } from "react";
+import { forwardRef, useState, useMemo, useEffect, useRef, JSX } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { CustomSquareProps } from "react-chessboard/dist/chessboard/types";
@@ -271,8 +271,8 @@ function ChessBoard() {
       { piece: "bQ", pieceHeight: 1.5 },
       { piece: "bK", pieceHeight: 1.6 },
     ];
-
-    const pieceComponents = {};
+    
+    const pieceComponents: Record<string, (props: { squareWidth: number }) => JSX.Element> = {};
     pieces.forEach(({ piece, pieceHeight }) => {
       pieceComponents[piece] = ({ squareWidth }: { squareWidth: number }) => (
           <div
