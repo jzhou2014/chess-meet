@@ -45,6 +45,7 @@ const CustomSquareRenderer = forwardRef<HTMLDivElement, CustomSquareProps>(
                   backgroundColor: "#312e81",
                   color: "#fff",
                   fontSize: 14,
+                  borderRadius: 4,
                 }}
             >
               {square}
@@ -291,6 +292,7 @@ function ChessBoard() {
                 style={{
                   position: "absolute",
                   bottom: `${0.2 * squareWidth}px`,
+                  height: `${pieceHeight * squareWidth}px`,
                   objectFit: piece[1] === "K" ? "contain" : "cover",
                 }}
             />
@@ -315,18 +317,18 @@ function ChessBoard() {
                 customBoardStyle={{
                   transform: "rotateX(27.5deg)",
                   transformOrigin: "center",
-                  border: "16px solid #b8836f",
-                  borderStyle: "outset",
-                  borderRightColor: " #b27c67",
+                  // border: "16px solid #b8836f",
+                  // borderStyle: "outset",
+                  // borderRightColor: " #b27c67",
                   borderRadius: "4px",
                   boxShadow: "rgba(0, 0, 0, 0.5) 2px 24px 24px 8px",
-                  borderRightWidth: "2px",
-                  borderLeftWidth: "2px",
-                  borderTopWidth: "0px",
-                  borderBottomWidth: "18px",
+                  // borderRightWidth: "2px",
+                  // borderLeftWidth: "2px",
+                  // borderTopWidth: "0px",
+                  // borderBottomWidth: "18px",
                   borderTopLeftRadius: "8px",
                   borderTopRightRadius: "8px",
-                  padding: "8px 8px 12px",
+                  // padding: "8px 8px 12px",
                   background: "#e0c094",
                   backgroundImage: 'url("/media/wood-pattern.png")',
                   backgroundSize: "cover",
