@@ -18,44 +18,6 @@ function delay(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
-const CustomSquareRenderer = forwardRef<HTMLDivElement, CustomSquareProps>(
-    (props, ref) => {
-      const { children, square, style } = props;
-      return (
-          <div
-              ref={ref}
-              style={{
-                ...style,
-                position: "relative",
-              }}
-          >
-            {children}
-            <div
-                className="pb-4 pt-1 px-2"
-                style={{
-                  zIndex: 100,
-                  position: "absolute",
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: 18,
-                  width: 18,
-                  backgroundColor: "#312e81",
-                  color: "#fff",
-                  fontSize: 14,
-                  borderRadius: 4,
-                }}
-            >
-              {square}
-            </div>
-          </div>
-      );
-    }
-);
-CustomSquareRenderer.displayName = "CustomSquareRenderer";
-
 function ChessBoard() {
   const game = useMemo(() => new Chess(), []);
   const [gamePosition, setGamePosition] = useState(game.fen());
@@ -311,8 +273,8 @@ function ChessBoard() {
                 id="Styled3DBoard"
                 position={gamePosition}
                 arePiecesDraggable={false}
-                showBoardNotation={false}
-                customSquare={CustomSquareRenderer}
+                showBoardNotation={true}
+                // customSquare={CustomSquareRenderer}
                 autoPromoteToQueen={true}
                 customBoardStyle={{
                   transform: "rotateX(27.5deg)",
