@@ -354,7 +354,7 @@ function ChessBoard() {
                 onMouseOutSquare={() => setActiveSquare("")}
             />
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center action-box">
             {hasGameStarted ? (
                 <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
