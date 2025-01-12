@@ -401,7 +401,7 @@ function ChessBoard() {
             <h3 className="text-lg font-medium mb-2">White</h3>
             <div className="flex flex-col mb-4">
               <label htmlFor="white-llm" className="mb-1">
-                Select LLM:
+                Select Player:
               </label>
               <select
                   id="white-llm"
@@ -433,7 +433,7 @@ function ChessBoard() {
             <h3 className="text-lg font-medium mb-2">Black</h3>
             <div className="flex flex-col mb-4">
               <label htmlFor="black-llm" className="mb-1">
-                Select LLM:
+                Select Player:
               </label>
               <select
                   id="black-llm"
