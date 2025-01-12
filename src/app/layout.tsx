@@ -42,7 +42,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Chess Meet",
   description: "How good are players at chess?",
-  authors: [{ name: "Jin Zhou", url: "https://www.linkedin.com/in/jin-zhou-a799853/" }],
+  authors: [{ name: "Jin Zhou", url: "https://www.linkedin.com/in/jin-zhou-a799853/" }, 
+    { name: "Liqiang Deng", url: "https://www.linkedin.com/in/liqiang-deng-18b837298/" }
+  ],
 };
 
 export default function RootLayout({
@@ -61,7 +63,7 @@ export default function RootLayout({
           <div className="container mx-auto w-[80vw] flex justify-between items-center">
             <h1 className="text-2xl font-bold">
               {metadata.title as string}
-              <span className="text-sm font-semibold ml-3">
+              {/* <span className="text-sm font-semibold ml-3">
                 by{" "}
                 <a
                   target="_blank"
@@ -74,6 +76,21 @@ export default function RootLayout({
                 >
                   Jin Zhou, Liqiang Deng
                 </a>
+              </span> */}
+              <span className="text-sm font-semibold ml-3">
+                by{" "}
+                {Array.isArray(metadata.authors) &&
+                  metadata.authors.map((author, index) => (
+                    <a
+                      key={index}
+                      target="_blank"
+                      href={author.url as string || "#"}
+                      className="hover:underline hover:text-blue-300"
+                    >
+                      {author.name}
+                    </a>
+                  )).reduce<React.ReactNode[]>((prev, curr) => [...prev, ", ", curr], [])
+                  .slice(1)}
               </span>
             </h1>
             <div>
