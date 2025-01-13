@@ -10,4 +10,5 @@ export const llms: MultiModalLLM[] = [
   { provider: "Anthropic", model: "claude-3-5-sonnet-20240620" },
   { provider: "Google", model: "gemini-1.5-flash" },
   { provider: "Google", model: "gemini-1.5-pro" },
+  { provider: "Human", model: "human"},
 ];

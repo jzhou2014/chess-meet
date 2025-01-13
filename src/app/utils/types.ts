@@ -1,4 +1,4 @@
-export type LLMProvider = "OpenAI" | "Google" | "Anthropic" | "Mixtral";
+export type LLMProvider = "OpenAI" | "Google" | "Anthropic" | "Mixtral" | "Human";
 
 export interface MultiModalLLM {
   provider: LLMProvider;
