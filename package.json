@@ -20,6 +20,7 @@
     "react": "^19.0.0",
     "react-chessboard": "^4.7.2",
     "react-dom": "^19.0.0",
+    "stockfish": "^16.0.0",
     "vercel-ai": "^0.0.0"
   },
   "devDependencies": {
