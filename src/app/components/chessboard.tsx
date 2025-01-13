@@ -5,10 +5,11 @@ import { useState, useMemo, useEffect, useRef, JSX } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { describeMove } from "../utils/moves";
-import { getNextMove } from "../controllers/llm";
+import { getNextMove } from "../controllers/player";
 import { IPlayer } from "../utils/types";
-import { llms } from "../utils/models";
+import { players } from "../utils/models";
 import Image from "next/image";
+import Engine from "./stockfish/engine";
 
 const LLM_THINK_DELAY = 0.5;
 const LOOP_DELAY = 0.5;
@@ -19,6 +20,7 @@ function delay(seconds: number) {
 
 function ChessBoard() {
   const game = useMemo(() => new Chess(), []);
+  const engine = useMemo(() => new Engine(), []);
   const [gamePosition, setGamePosition] = useState(game.fen());
   const [allMovesString, setAllMovesString] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(false); // Play/Pause state
@@ -40,8 +42,8 @@ function ChessBoard() {
   const blackApiKeyRef = useRef<HTMLInputElement | null>(null);
 
   const playersRef = useRef<Record<string, IPlayer | undefined>>({
-    w: { color: "White", llm: llms[0], apiKey: "" },
-    b: { color: "Black", llm: llms[0], apiKey: "" },
+    w: { color: "White", player: players[0], apiKey: "" },
+    b: { color: "Black", player: players[0], apiKey: "" },
   });
 
   useEffect(() => {
@@ -50,22 +52,38 @@ function ChessBoard() {
     }
   }, [allMovesString]);
 
+  function findBestMove() {
+    engine.evaluatePosition(game.fen());
+
+    engine.onMessage(({ bestMove }) => {
+      if (bestMove) {
+        game.move({
+          from: bestMove.substring(0, 2),
+          to: bestMove.substring(2, 4),
+          promotion: bestMove.substring(4, 5),
+        });
+
+        setGamePosition(game.fen());
+      }
+    });
+  }
+
   const handleSave = async () => {
-    const whiteLlm = llms.find((llm) => llm.model === whiteModalRef.current?.value);
-    const blackLlm = llms.find((llm) => llm.model === blackModalRef.current?.value);
+    const whitePlayer = players.find((player) => player.model === whiteModalRef.current?.value);
+    const blackPlayer = players.find((player) => player.model === blackModalRef.current?.value);
     const whiteApiKey = whiteApiKeyRef.current?.value ?? "";
     const blackApiKey = blackApiKeyRef.current?.value ?? "";
 
-    if (whiteLlm && blackLlm) {
+    if (whitePlayer && blackPlayer) {
       playersRef.current = {
         w: {
           color: "White",
-          llm: whiteLlm,
+          player: whitePlayer,
           apiKey: whiteApiKey,
         },
         b: {
           color: "Black",
-          llm: blackLlm,
+          player: blackPlayer,
           apiKey: blackApiKey,
         },
       };
@@ -73,7 +91,7 @@ function ChessBoard() {
       await delay(2);
       setSavedMessage("");
     } else {
-      setErrorMessage("Error: LLM selection is invalid.");
+      setErrorMessage("Error: Player selection is invalid.");
       await delay(2);
       setErrorMessage("");
     }
@@ -128,27 +146,32 @@ function ChessBoard() {
               ? `${lastTurn}: ${describeMove(lastMove)}`
               : "No previous moves yet.";
           setThinkingMessage(`${currentTurn} is thinking...`);
-          const provider = playersRef.current[turnKey]?.llm.provider;
-          const model = playersRef.current[turnKey]?.llm.model;
+          const provider = playersRef.current[turnKey]?.player?.provider;
+          const model = playersRef.current[turnKey]?.player?.model;
           const apiKey = playersRef.current[turnKey]?.apiKey;
-          if (!provider || !model || !apiKey) {
-            throw new Error("Provider, model, or API key is undefined");
+          const config = playersRef.current[turnKey]?.player?.config;
+          if (!provider || !model ) {
+            throw new Error("Provider, or model is undefined");
           }
-          const nextMove = await getNextMove({
-            currentStateImage: img,
-            allMoves: movesToStrings,
-            provider,
-            model,
-            color: game.turn() === "w" ? "White" : "Black",
-            lastMove: lastMoveString,
-            apiKey,
-          });
-          await delay(LLM_THINK_DELAY);
-          setThinkingMessage("");
-          if (nextMove < 0 || nextMove >= moves.length) {
-            throw new Error(`Invalid move: ${nextMove}`);
+          if (provider === "Stockfish") {
+            findBestMove();
+          } else {
+            const nextMove = await getNextMove({
+              currentStateImage: img,
+              allMoves: movesToStrings,
+              provider,
+              model,
+              color: game.turn() === "w" ? "White" : "Black",
+              lastMove: lastMoveString,
+              apiKey,
+            });
+            await delay(LLM_THINK_DELAY);
+            setThinkingMessage("");
+            if (nextMove < 0 || nextMove >= moves.length) {
+              throw new Error(`Invalid move: ${nextMove}`);
+            }
+            move = moves[nextMove];
           }
-          move = moves[nextMove];
           break;
         } catch (e) {
           console.error(`Error: ${e}. Trying again...`);
@@ -361,17 +384,17 @@ function ChessBoard() {
           <div className="w-full mb-6">
             <h3 className="text-lg font-medium mb-2">White</h3>
             <div className="flex flex-col mb-4">
-              <label htmlFor="white-llm" className="mb-1">
+              <label htmlFor="white-player" className="mb-1">
                 Select Player:
               </label>
               <select
-                  id="white-llm"
+                  id="white-player"
                   ref={whiteModalRef}
                   className="border border-gray-300 rounded p-2"
               >
-                {llms.map((llm) => (
-                    <option key={llm.model} value={llm.model}>
-                      {llm.model}
+                {players.map((player) => (
+                    <option key={player.model} value={player.model}>
+                      {player.model}
                     </option>
                 ))}
               </select>
@@ -401,9 +424,9 @@ function ChessBoard() {
                   ref={blackModalRef}
                   className="border border-gray-300 rounded p-2"
               >
-                {llms.map((llm) => (
-                    <option key={llm.model} value={llm.model}>
-                      {llm.model}
+                {players.map((player) => (
+                    <option key={player.model} value={player.model}>
+                      {player.model}
                     </option>
                 ))}
               </select>

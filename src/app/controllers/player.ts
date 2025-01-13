@@ -15,9 +15,10 @@ export async function getNextMove(input: NextMoveInput) {
     provider,
     model,
     color,
-    apiKey,
     lastMove,
+    apiKey
   } = input;
+
   const llmMap = {
     OpenAI: createOpenAI,
     Google: createGoogleGenerativeAI,
