@@ -86,17 +86,28 @@ function ChessBoard() {
     isGameOverRef.current = false;
     setIsGameOver(false);
     setIsPlaying(true);
-    while (true) {
-      if (isGameOverRef.current) {
-        console.log("Game over");
-        break;
-      }
-      if (isPlayingRef.current) {
+
+    const turnKey = game.turn();
+    const players = playersRef.current;
+    const isHumanGame = Object.values(players).some((player) => player?.llm.model === "human");
+    if (isHumanGame) {
+      const model = players[turnKey]?.llm.model;
+      if (model !== "human") {
         await makeMove();
       }
-      await delay(LOOP_DELAY);
+    } else {
+      while (true) {
+        if (isGameOverRef.current) {
+          console.log("Game over");
+          break;
+        }     
+        if (isPlayingRef.current) {
+          await makeMove();
+        }
+        await delay(LOOP_DELAY);
+      }
+      console.log("Game loop ended");
     }
-    console.log("Game loop ended");
   };
 
   const makeMove = async () => {
@@ -263,6 +274,29 @@ function ChessBoard() {
     return pieceComponents;
   }, []);
 
+  const onDrop = (
+    sourceSquare: string,
+    targetSquare: string,
+    piece: string
+  ): boolean => {
+    const move = game.move({
+      from: sourceSquare,
+      to: targetSquare,
+      promotion: piece[1]?.toLowerCase() ?? "q",
+    });
+
+    setGamePosition(game.fen());
+
+    if (move === null) return false;
+    if (game.isGameOver() || game.isDraw()) return false;
+    const players = playersRef.current;
+    const isAllHumanGame = Object.values(players).every((player) => player?.llm.model === "human");
+    if (!isAllHumanGame) {
+      makeMove()
+    }
+    return true;
+  };
+
   return (
       <div className="flex flex-row gap-10 items-start justify-start">
         <div className="flex flex-col gap-2 ml-10 sticky mt-5 top-20 bg-gray-100 pb-3 px-3 pt-2 rounded-lg">
@@ -271,10 +305,21 @@ function ChessBoard() {
             <Chessboard
                 id="Styled3DBoard"
                 position={gamePosition}
-                arePiecesDraggable={false}
+                // arePiecesDraggable={false}
                 showBoardNotation={true}
                 // customSquare={CustomSquareRenderer}
                 autoPromoteToQueen={true}
+                isDraggablePiece={({ piece }) => {
+                  const turnKey = game.turn();
+                  const model = playersRef.current[turnKey]?.llm.model;
+                  if (game.turn() === "w" && model === "human") {
+                    return piece.startsWith("w");
+                  }
+                  if (game.turn() === "b" && model === "human") {
+                    return piece.startsWith("b");
+                  }
+                  return false;
+                }}
                 customBoardStyle={{
                   transform: "rotateX(27.5deg)",
                   transformOrigin: "center",
@@ -313,6 +358,7 @@ function ChessBoard() {
                 }}
                 onMouseOverSquare={(sq) => setActiveSquare(sq)}
                 onMouseOutSquare={() => setActiveSquare("")}
+                onPieceDrop={onDrop}
             />
           </div>
           <div className="flex justify-between items-center action-box">
@@ -368,6 +414,11 @@ function ChessBoard() {
                   id="white-llm"
                   ref={whiteModalRef}
                   className="border border-gray-300 rounded p-2"
+                  onChange={() => {
+                    if (whiteApiKeyRef.current) {
+                      whiteApiKeyRef.current.value = "";
+                    }
+                  }}
               >
                 {llms.map((llm) => (
                     <option key={llm.model} value={llm.model}>
@@ -386,6 +437,7 @@ function ChessBoard() {
                   id="white-api-key"
                   className="border border-gray-300 rounded p-2"
                   placeholder="Enter API Key"
+                  disabled={whiteModalRef?.current?.value === 'human'}
               />
             </div>
           </div>
@@ -400,6 +452,11 @@ function ChessBoard() {
                   id="black-llm"
                   ref={blackModalRef}
                   className="border border-gray-300 rounded p-2"
+                  onChange={() => {
+                    if (blackApiKeyRef.current) {
+                      blackApiKeyRef.current.value = "";
+                    }
+                  }}
               >
                 {llms.map((llm) => (
                     <option key={llm.model} value={llm.model}>
@@ -418,6 +475,7 @@ function ChessBoard() {
                   id="black-api-key"
                   className="border border-gray-300 rounded p-2"
                   placeholder="Enter API Key"
+                  disabled={blackModalRef?.current?.value === 'human'}
               />
             </div>
           </div>
