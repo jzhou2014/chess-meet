@@ -23,6 +23,7 @@ export async function getNextMove(input: NextMoveInput) {
     Google: createGoogleGenerativeAI,
     Anthropic: createAnthropic,
     Mixtral: createMistral,
+    Human: null,
   };
   const createLlmProvider = llmMap[provider] ?? createOpenAI;
   const llmProvider = createLlmProvider({
