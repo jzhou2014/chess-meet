@@ -53,7 +53,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const socials = {
-    LinkedIn: "https://www.linkedin.com/in/jin-zhou-a799853/",
     GitHub: "https://github.com/jzhou2014/chess-meet",
   };
   return (
@@ -63,20 +62,6 @@ export default function RootLayout({
           <div className="container mx-auto w-[80vw] flex justify-between items-center">
             <h1 className="text-2xl font-bold">
               {metadata.title as string}
-              {/* <span className="text-sm font-semibold ml-3">
-                by{" "}
-                <a
-                  target="_blank"
-                  href={
-                    Array.isArray(metadata.authors) && metadata.authors[0]
-                      ? (metadata.authors[0] as { url: string }).url
-                      : "#"
-                  }
-                  className="hover:underline hover:text-blue-300"
-                >
-                  Jin Zhou, Liqiang Deng
-                </a>
-              </span> */}
               <span className="text-sm font-semibold ml-3">
                 by{" "}
                 {Array.isArray(metadata.authors) &&
