@@ -38,6 +38,8 @@ function ChessBoard() {
   const blackModalRef = useRef<HTMLSelectElement | null>(null);
   const whiteApiKeyRef = useRef<HTMLInputElement | null>(null);
   const blackApiKeyRef = useRef<HTMLInputElement | null>(null);
+  const [whitePlayer, setWhitePlayer] = useState("");
+  const [blackPlayer, setBlackPlayer] = useState("");
 
   const playersRef = useRef<Record<string, IPlayer | undefined>>({
     w: { color: "White", llm: llms[0], apiKey: "" },
@@ -285,10 +287,21 @@ function ChessBoard() {
       promotion: piece[1]?.toLowerCase() ?? "q",
     });
 
+    // This time will change turn
+    let currentTurn = "";
+    if (game.turn() === "w") {
+      currentTurn = "Black";
+    } else {
+      currentTurn = "White";
+    }
+    const lastMove = game.history().slice(-1)[0];
+    const moveString = `${currentTurn}: ${describeMove(lastMove)}`;   
     setGamePosition(game.fen());
+    setAllMovesString((prev) => [...prev, moveString]);
 
     if (move === null) return false;
     if (game.isGameOver() || game.isDraw()) return false;
+
     const players = playersRef.current;
     const isAllHumanGame = Object.values(players).every((player) => player?.llm.model === "human");
     if (!isAllHumanGame) {
@@ -414,7 +427,9 @@ function ChessBoard() {
                   id="white-llm"
                   ref={whiteModalRef}
                   className="border border-gray-300 rounded p-2"
-                  onChange={() => {
+                  value={whitePlayer}
+                  onChange={(e) => {
+                    setWhitePlayer(e.target.value);
                     if (whiteApiKeyRef.current) {
                       whiteApiKeyRef.current.value = "";
                     }
@@ -452,7 +467,9 @@ function ChessBoard() {
                   id="black-llm"
                   ref={blackModalRef}
                   className="border border-gray-300 rounded p-2"
-                  onChange={() => {
+                  value={blackPlayer}
+                  onChange={(e) => {
+                    setBlackPlayer(e.target.value);
                     if (blackApiKeyRef.current) {
                       blackApiKeyRef.current.value = "";
                     }
