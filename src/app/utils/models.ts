@@ -1,6 +1,8 @@
 import { MultiModalLLM } from "./types";
 
 export const llms: MultiModalLLM[] = [
+  { provider: "Human", model: "human" },
+  { provider: "Stockfish", model: "stockfish" },
   { provider: "OpenAI", model: "gpt-4o" },
   { provider: "OpenAI", model: "gpt-4o-mini" },
   { provider: "OpenAI", model: "gpt-4-turbo" },
@@ -8,7 +10,7 @@ export const llms: MultiModalLLM[] = [
   { provider: "OpenAI", model: "gpt-3.5-turbo" },
   { provider: "Mixtral", model: "pixtral-12b-2409" },
   { provider: "Anthropic", model: "claude-3-5-sonnet-20240620" },
-  { provider: "Google", model: "gemini-1.5-flash" },
-  { provider: "Google", model: "gemini-1.5-pro" },
-  { provider: "Human", model: "human"},
+  { provider: "Google", model: "gemini-2.5-flash" },
+  { provider: "Google", model: "gemini-2.5-pro" },
+  { provider: "Ollama", model: "llama3.2" },
 ];

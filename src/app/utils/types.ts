@@ -1,4 +1,4 @@
-export type LLMProvider = "OpenAI" | "Google" | "Anthropic" | "Mixtral" | "Human";
+export type LLMProvider = "OpenAI" | "Google" | "Anthropic" | "Mixtral" | "Human" | "Stockfish" | "Ollama";
 
 export interface MultiModalLLM {
   provider: LLMProvider;
@@ -13,6 +13,7 @@ export interface NextMoveInput {
   color: "White" | "Black";
   lastMove: string;
   apiKey: string;
+  fen: string;
 }
 
 export interface IPlayer {
