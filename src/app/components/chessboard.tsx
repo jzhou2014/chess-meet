@@ -9,9 +9,12 @@ import { getNextMove } from "../controllers/llm";
 import { IPlayer } from "../utils/types";
 import { llms } from "../utils/models";
 import Image from "next/image";
+import { ChessEngine } from "../utils/chess-engine";
 
 const LLM_THINK_DELAY = 0.5;
 const LOOP_DELAY = 0.5;
+const stockfishEngine = typeof Worker !== "undefined" ? new ChessEngine() : null;
+if (stockfishEngine) stockfishEngine.setSkillLevel(20);
 
 function delay(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
@@ -38,8 +41,11 @@ function ChessBoard() {
   const blackModalRef = useRef<HTMLSelectElement | null>(null);
   const whiteApiKeyRef = useRef<HTMLInputElement | null>(null);
   const blackApiKeyRef = useRef<HTMLInputElement | null>(null);
-  const [whitePlayer, setWhitePlayer] = useState("");
-  const [blackPlayer, setBlackPlayer] = useState("");
+  const [whiteProvider, setWhiteProvider] = useState(llms[0].provider);
+  const [blackProvider, setBlackProvider] = useState(llms[0].provider);
+  const [activeSquare, setActiveSquare] = useState("");
+  const [whitePlayer, setWhitePlayer] = useState(llms[0].model);
+  const [blackPlayer, setBlackPlayer] = useState(llms[0].model);
 
   const playersRef = useRef<Record<string, IPlayer | undefined>>({
     w: { color: "White", llm: llms[0], apiKey: "" },
@@ -132,7 +138,7 @@ function ChessBoard() {
       const canvas = await html2canvas(document.getElementById("cb")!);
       const img = canvas.toDataURL("image/png");
       const movesToStrings = moves.map((move) => describeMove(move));
-      for (let retry = 0; retry < 1; retry++) {
+      for (let retry = 0; retry < 3; retry++) {
         try {
           console.log(`Trying to get next move (try: ${retry + 1})...`);
           const previousMoves = game.history();
@@ -144,18 +150,29 @@ function ChessBoard() {
           const provider = playersRef.current[turnKey]?.llm.provider;
           const model = playersRef.current[turnKey]?.llm.model;
           const apiKey = playersRef.current[turnKey]?.apiKey;
-          if (!provider || !model || !apiKey) {
+          const noApiKeyNeeded = provider === "Stockfish" || provider === "Human" || provider === "Ollama";
+          if (!provider || !model || (!apiKey && !noApiKeyNeeded)) {
             throw new Error("Provider, model, or API key is undefined");
           }
-          const nextMove = await getNextMove({
-            currentStateImage: img,
-            allMoves: movesToStrings,
-            provider,
-            model,
-            color: game.turn() === "w" ? "White" : "Black",
-            lastMove: lastMoveString,
-            apiKey,
-          });
+          let nextMove: number;
+          if (provider === "Stockfish") {
+            if (!stockfishEngine) throw new Error("Stockfish not available");
+            const bestMove = await stockfishEngine.getBestMove(game.fen());
+            const sanMoves = game.moves();
+            nextMove = sanMoves.findIndex(m => m.toLowerCase() === bestMove.toLowerCase());
+            if (nextMove === -1) nextMove = Math.floor(Math.random() * moves.length);
+          } else {
+            nextMove = await getNextMove({
+              currentStateImage: img,
+              allMoves: movesToStrings,
+              provider,
+              model,
+              color: game.turn() === "w" ? "White" : "Black",
+              lastMove: lastMoveString,
+              apiKey: apiKey ?? "",
+              fen: game.fen(),
+            });
+          }
           await delay(LLM_THINK_DELAY);
           setThinkingMessage("");
           if (nextMove < 0 || nextMove >= moves.length) {
@@ -172,6 +189,7 @@ function ChessBoard() {
       }
     }
     try {
+      if (!move) return;
       const moveString = `${currentTurn}: ${describeMove(move)}`;
       if (!isGameOverRef.current) {
         game.move(move);
@@ -227,10 +245,10 @@ function ChessBoard() {
     setResultMessage("");
     setThinkingMessage("");
     setHasGameStarted(false);
+    setActiveSquare("");
     console.log("Game reset!");
   };
 
-  const [activeSquare, setActiveSquare] = useState("");
   const threeDPieces = useMemo(() => {
     const pieces = [
       { piece: "wP", pieceHeight: 1 },
@@ -279,33 +297,45 @@ function ChessBoard() {
   const onDrop = (
     sourceSquare: string,
     targetSquare: string,
-    piece: string
+    _piece: string
   ): boolean => {
-    const move = game.move({
-      from: sourceSquare,
-      to: targetSquare,
-      promotion: piece[1]?.toLowerCase() ?? "q",
-    });
-
-    // This time will change turn
-    let currentTurn = "";
-    if (game.turn() === "w") {
-      currentTurn = "Black";
-    } else {
-      currentTurn = "White";
+    let move;
+    try {
+      move = game.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: "q",
+      });
+    } catch {
+      return false;
     }
-    const lastMove = game.history().slice(-1)[0];
-    const moveString = `${currentTurn}: ${describeMove(lastMove)}`;   
-    setGamePosition(game.fen());
-    setAllMovesString((prev) => [...prev, moveString]);
 
     if (move === null) return false;
-    if (game.isGameOver() || game.isDraw()) return false;
+
+    const currentTurn = move.color === "w" ? "White" : "Black";
+    const moveString = `${currentTurn}: ${describeMove(move.san)}`;
+    setAllMovesString((prev) => [...prev, moveString]);
+    setGamePosition(game.fen());
+
+    if (game.isGameOver()) {
+      let reason = "";
+      if (game.isCheckmate()) reason = "Checkmate";
+      else if (game.isStalemate()) reason = "Stalemate";
+      else if (game.isDraw()) reason = "Draw";
+      const finalStringToDisplay = `Game Over: ${reason}.${
+        !game.isDraw() ? ` Winner: ${currentTurn}.` : ""
+      }`;
+      setResultMessage(finalStringToDisplay);
+      setAllMovesString((prev) => [...prev, finalStringToDisplay]);
+      setIsGameOver(true);
+      isGameOverRef.current = true;
+      return true;
+    }
 
     const players = playersRef.current;
     const isAllHumanGame = Object.values(players).every((player) => player?.llm.model === "human");
-    if (!isAllHumanGame) {
-      makeMove()
+    if (!isAllHumanGame && !isGameOverRef.current) {
+      makeMove();
     }
     return true;
   };
@@ -433,6 +463,8 @@ function ChessBoard() {
                     if (whiteApiKeyRef.current) {
                       whiteApiKeyRef.current.value = "";
                     }
+                    const selected = llms.find(l => l.model === whiteModalRef.current?.value);
+                    if (selected) setWhiteProvider(selected.provider);
                   }}
               >
                 {llms.map((llm) => (
@@ -442,6 +474,7 @@ function ChessBoard() {
                 ))}
               </select>
             </div>
+            {whiteProvider !== "Human" && whiteProvider !== "Stockfish" && whiteProvider !== "Ollama" && (
             <div className="flex flex-col">
               <label htmlFor="white-api-key" className="mb-1">
                 API Key:
@@ -452,9 +485,9 @@ function ChessBoard() {
                   id="white-api-key"
                   className="border border-gray-300 rounded p-2"
                   placeholder="Enter API Key"
-                  disabled={whiteModalRef?.current?.value === 'human'}
               />
             </div>
+            )}
           </div>
 
           <div className="w-full">
@@ -473,6 +506,8 @@ function ChessBoard() {
                     if (blackApiKeyRef.current) {
                       blackApiKeyRef.current.value = "";
                     }
+                    const selected = llms.find(l => l.model === blackModalRef.current?.value);
+                    if (selected) setBlackProvider(selected.provider);
                   }}
               >
                 {llms.map((llm) => (
@@ -482,6 +517,7 @@ function ChessBoard() {
                 ))}
               </select>
             </div>
+            {blackProvider !== "Human" && blackProvider !== "Stockfish" && blackProvider !== "Ollama" && (
             <div className="flex flex-col">
               <label htmlFor="black-api-key" className="mb-1">
                 API Key:
@@ -492,9 +528,9 @@ function ChessBoard() {
                   id="black-api-key"
                   className="border border-gray-300 rounded p-2"
                   placeholder="Enter API Key"
-                  disabled={blackModalRef?.current?.value === 'human'}
               />
             </div>
+            )}
           </div>
           <div>
             <button

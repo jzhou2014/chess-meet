@@ -23,6 +23,8 @@ export async function getNextMove(input: NextMoveInput) {
     Google: createGoogleGenerativeAI,
     Anthropic: createAnthropic,
     Mixtral: createMistral,
+    Ollama: (config: { apiKey: string }) => createOpenAI({ ...config, baseURL: "http://localhost:11434/v1", apiKey: "ollama" }),
+    Stockfish: null,
     Human: null,
   };
   const createLlmProvider = llmMap[provider] ?? createOpenAI;
